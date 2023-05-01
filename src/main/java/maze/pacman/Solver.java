@@ -4,16 +4,21 @@ import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.Stack;
 
-public class MazeSolver {
-    private static final int[] START = {1, 0};
+public class Solver {
+    private static final int[] entitySTART = {1, 0};
     private int[] end;
+    private int[] playerSTART;
     private ArrayList<ArrayList<Integer>> maze;
 
-    public MazeSolver() {
+    public Solver() {
     }
 
     public int[] getEnd() {
         return end;
+    }
+
+    public int[] getPlayerSTART() {
+        return playerSTART;
     }
 
     public void setEnd(int[] end) {
@@ -45,6 +50,9 @@ public class MazeSolver {
                 if (intValue == 3) {
                     end = new int[]{this.maze.size(), lineList.size() - 1};
                 }
+                if (intValue == -1) {
+                    playerSTART = new int[]{this.maze.size(), lineList.size() - 1};
+                }
             }
             this.maze.add(lineList);
         }
@@ -54,10 +62,10 @@ public class MazeSolver {
     public ArrayList<int[]> dfs() {
         int[][] visited = new int[maze.size()][maze.get(0).size()];
         Stack<int[]> stack = new Stack<>();
-        stack.push(START);
+        stack.push(entitySTART);
 
         ArrayList<int[]> path = new ArrayList<>();
-        path.add(START);
+        path.add(entitySTART);
         while (!stack.isEmpty()) {
             int[] current = stack.peek();
             int x = current[0];
@@ -104,6 +112,7 @@ public class MazeSolver {
             }
 
         }
+
         return null;
     }
 

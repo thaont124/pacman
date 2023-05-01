@@ -4,8 +4,10 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
@@ -13,29 +15,39 @@ import javafx.util.Duration;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class MazeGame extends Application {
     private static final int TILE_SIZE = 20;
-    private static final int[] START = {1, 0};
+    private static final int[] robotSTART = {1, 0};
+    private int[] humanSTART;
+
+    private int[] end;
 
     private Group mazeGroup;
     private Entity entity;
 
+    private Entity player;
+
+
     public void start(Stage primaryStage) throws Exception {
         // Đọc ma trận mê cung từ file
         Scanner scanner = new Scanner(new File("map.txt"));
-        MazeSolver mazeSolver = new MazeSolver();
-        mazeSolver.setMaze(scanner);
-        ArrayList<int[]> path = mazeSolver.dfs();
+        Solver solver = new Solver();
+        solver.setMaze(scanner);
+        humanSTART = solver.getPlayerSTART();
+        end = solver.getEnd();
+        ArrayList<int[]> path = solver.dfs();
 
         // Tạo đối tượng thực thể và đặt vị trí ban đầu
-        entity = new Entity(START);
+        entity = new Entity(robotSTART);
+        player = new Entity(humanSTART);
 
         // Tạo màn hình chơi game
         mazeGroup = new Group();
-        for (int i = 0; i < mazeSolver.getMaze().size(); i++) {
-            ArrayList<Integer> row = mazeSolver.getMaze().get(i);
+        for (int i = 0; i < solver.getMaze().size(); i++) {
+            ArrayList<Integer> row = solver.getMaze().get(i);
             for (int j = 0; j < row.size(); j++) {
                 int type = row.get(j);
                 Rectangle tile = new Rectangle(j * TILE_SIZE, i * TILE_SIZE, TILE_SIZE, TILE_SIZE);
@@ -51,12 +63,17 @@ public class MazeGame extends Application {
         }
 
         // Thêm thực thể vào màn hình chơi game
-        Rectangle entityRect = new Rectangle(START[1] * TILE_SIZE, START[0] * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        Rectangle entityRect = new Rectangle(robotSTART[1] * TILE_SIZE, robotSTART[0] * TILE_SIZE, TILE_SIZE, TILE_SIZE);
         entityRect.setFill(Color.BLUE);
         mazeGroup.getChildren().add(entityRect);
 
+        //Thêm người chơi vào màn hình game
+        Rectangle playerRect = new Rectangle(humanSTART[1] * TILE_SIZE, humanSTART[0] * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        playerRect.setFill(Color.RED);
+        mazeGroup.getChildren().add(playerRect);
+
         // Tạo scene và hiển thị
-        Scene scene = new Scene(mazeGroup, mazeSolver.getMaze().get(0).size() * TILE_SIZE, mazeSolver.getMaze().size() * TILE_SIZE);
+        Scene scene = new Scene(mazeGroup, solver.getMaze().get(0).size() * TILE_SIZE, solver.getMaze().size() * TILE_SIZE);
         primaryStage.setScene(scene);
         primaryStage.show();
 
@@ -74,9 +91,80 @@ public class MazeGame extends Application {
             timeline.getKeyFrames().add(keyFrame);
 
             entity.setPosition(new int[]{x, y});
+            //winAlert();
+
         }
+
+        // Bắt sự kiện phím để di chuyển người chơi
+        scene.setOnKeyPressed(event -> {
+            switch (event.getCode()) {
+                case UP:
+                    player.moveUp(solver.getMaze(), player.getPosition());
+                    playerRect.setY(player.getPosition()[0] * TILE_SIZE);
+
+                    winAlert();
+                    break;
+                case DOWN:
+                    player.moveDown(solver.getMaze(), player.getPosition());
+                    playerRect.setY(player.getPosition()[0] * TILE_SIZE);
+                    winAlert();
+                    break;
+                case LEFT:
+                    player.moveLeft(solver.getMaze(), player.getPosition());
+                    playerRect.setX(player.getPosition()[1] * TILE_SIZE);
+                    winAlert();
+                    break;
+                case RIGHT:
+                    player.moveRight(solver.getMaze(), player.getPosition());
+                    playerRect.setX(player.getPosition()[1] * TILE_SIZE);
+                    winAlert();
+                    break;
+                default:
+                    break;
+            }
+        });
+
         timeline.play();
     }
+
+    private void winAlert() {
+        if (checkWin() == 1) {
+            System.out.println("Bạn đã thắng!");
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Bạn đã có Triển!");
+            alert.setHeaderText(null);
+            alert.setContentText("Chúc mừng, Triển là của bạn!");
+            alert.setOnHidden(evt -> Platform.exit());
+            alert.show();
+        }
+        if (checkWin() == 0){
+            System.out.println("Bạn đã thua!");
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Triển thuộc về người khác rồi!");
+            alert.setHeaderText(null);
+            alert.setContentText("Xin lỗi, Triển không phải của bạn!");
+            alert.setOnHidden(evt -> Platform.exit());
+            alert.show();
+        }
+        if (checkWin() == -1)
+            System.out.println("Không có");
+    }
+
+    public int checkWin() {
+        boolean human = Arrays.equals(player.getPosition(),end);
+        boolean robot = Arrays.equals(entity.getPosition(), end);
+        //player đến đích trước cho kết quả 1;
+        if (human == true ) {
+                return 1;
+        }
+        //máy đến đích trước cho kết quả 0;
+        if (human == false && robot == true) {
+            return 0;
+        }
+        //chưa ai tới đích cho kết quả -1
+        return -1;
+    }
+
     public static void main(String[] args) {
         launch();
     }
