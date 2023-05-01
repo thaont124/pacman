@@ -24,6 +24,7 @@ public class MazeGame extends Application {
     private int[] humanSTART;
 
     private int[] end;
+    private Rectangle endRect;
 
     private Group mazeGroup;
     private Entity entity;
@@ -55,6 +56,7 @@ public class MazeGame extends Application {
                     tile.setFill(Color.BLACK);
                 } else if (type == 3) {
                     tile.setFill(Color.GREEN);
+                    endRect = new Rectangle(end[1] * TILE_SIZE, end[0] * TILE_SIZE, TILE_SIZE, TILE_SIZE);
                 } else {
                     tile.setFill(Color.WHITE);
                 }
@@ -91,44 +93,53 @@ public class MazeGame extends Application {
             timeline.getKeyFrames().add(keyFrame);
 
             entity.setPosition(new int[]{x, y});
-            //winAlert();
+
+            //System.out.println(entity.getPosition()[0] + " " + entity.getPosition()[1]);
+
 
         }
+        timeline.play();
 
         // Bắt sự kiện phím để di chuyển người chơi
         scene.setOnKeyPressed(event -> {
+
             switch (event.getCode()) {
                 case UP:
                     player.moveUp(solver.getMaze(), player.getPosition());
                     playerRect.setY(player.getPosition()[0] * TILE_SIZE);
-
-                    winAlert();
+                    double[] human = {playerRect.getX(), playerRect.getY()};
+                    double[] robot = {entityRect.getX(), entityRect.getY()};
+                    winAlert(human,robot);
                     break;
                 case DOWN:
                     player.moveDown(solver.getMaze(), player.getPosition());
                     playerRect.setY(player.getPosition()[0] * TILE_SIZE);
-                    winAlert();
+                    human = new double[]{playerRect.getX(), playerRect.getY()};
+                    robot = new double[]{entityRect.getX(), entityRect.getY()};
+                    winAlert(human,robot);
                     break;
                 case LEFT:
                     player.moveLeft(solver.getMaze(), player.getPosition());
                     playerRect.setX(player.getPosition()[1] * TILE_SIZE);
-                    winAlert();
+                    human  = new double[]{playerRect.getX(), playerRect.getY()};
+                    robot = new double[]{entityRect.getX(), entityRect.getY()};
+                    winAlert(human,robot);
                     break;
                 case RIGHT:
                     player.moveRight(solver.getMaze(), player.getPosition());
                     playerRect.setX(player.getPosition()[1] * TILE_SIZE);
-                    winAlert();
+                    human = new double[]{playerRect.getX(), playerRect.getY()};
+                    robot = new double[]{entityRect.getX(), entityRect.getY()};
+                    winAlert(human,robot);
                     break;
                 default:
                     break;
             }
         });
-
-        timeline.play();
     }
 
-    private void winAlert() {
-        if (checkWin() == 1) {
+    private void winAlert(double[] human, double[] robot) {
+        if (checkWin(human, robot) == 1) {
             System.out.println("Bạn đã thắng!");
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Bạn đã có Triển!");
@@ -137,28 +148,29 @@ public class MazeGame extends Application {
             alert.setOnHidden(evt -> Platform.exit());
             alert.show();
         }
-        if (checkWin() == 0){
+        if (checkWin(human, robot) == 0){
             System.out.println("Bạn đã thua!");
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Triển thuộc về người khác rồi!");
             alert.setHeaderText(null);
-            alert.setContentText("Xin lỗi, Triển không phải của bạn!");
+            alert.setContentText("Triển không thuộc về bạn!");
             alert.setOnHidden(evt -> Platform.exit());
             alert.show();
         }
-        if (checkWin() == -1)
+        if (checkWin(human, robot) == -1)
             System.out.println("Không có");
     }
 
-    public int checkWin() {
-        boolean human = Arrays.equals(player.getPosition(),end);
-        boolean robot = Arrays.equals(entity.getPosition(), end);
+    public int checkWin(double[] human, double[] robot) {
+        double[] ending = {endRect.getX(), endRect.getY()};
+        boolean humanWin = Arrays.equals(human,ending);
+        boolean robotWin = Arrays.equals(robot, ending);
         //player đến đích trước cho kết quả 1;
-        if (human == true ) {
+        if (humanWin && !robotWin) {
                 return 1;
         }
         //máy đến đích trước cho kết quả 0;
-        if (human == false && robot == true) {
+        if (!humanWin && robotWin) {
             return 0;
         }
         //chưa ai tới đích cho kết quả -1

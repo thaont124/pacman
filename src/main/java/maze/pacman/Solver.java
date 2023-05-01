@@ -73,7 +73,7 @@ public class Solver {
             visited[x][y] = 1;
             if (x == end[0] && y == end[1]) {
                 for (int[] m : path)
-                    System.out.println(m[0] + " " + m[1]);
+//                    System.out.println(m[0] + " " + m[1]);
                 // Tìm thấy đích
                 return path;
             }
