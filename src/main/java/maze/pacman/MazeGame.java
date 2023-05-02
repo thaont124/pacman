@@ -8,8 +8,16 @@ import javafx.application.Platform;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -30,9 +38,13 @@ public class MazeGame extends Application {
     private Entity entity;
 
     private Entity player;
-
-
+    
+    private Scene startScene, mainScene, endScene;
+    
+    private Stage window;
+    
     public void start(Stage primaryStage) throws Exception {
+        window = primaryStage;
         // Đọc ma trận mê cung từ file
         Scanner scanner = new Scanner(new File("map.txt"));
         Solver solver = new Solver();
@@ -44,7 +56,41 @@ public class MazeGame extends Application {
         // Tạo đối tượng thực thể và đặt vị trí ban đầu
         entity = new Entity(robotSTART);
         player = new Entity(humanSTART);
-
+        
+        
+        // Màn chơi mở đầu
+        Group startGroup = new Group();
+        startScene = new Scene(startGroup, solver.getMaze().get(0).size() * TILE_SIZE, solver.getMaze().size() * TILE_SIZE);
+        
+        // Add a background image
+        Image backgroundImage = new Image("https://wallpaperaccess.com/full/1348293.jpg");
+        ImageView backgroundImageView = new ImageView(backgroundImage);
+        startGroup.getChildren().add(backgroundImageView);
+        
+        Text title = new Text("Giải mã ma trận");
+        title.setFont(Font.font("Arial", FontWeight.BOLD, 36));
+        title.setFill(Color.WHITE);
+        title.setLayoutX(50);
+        title.setLayoutY(100);
+//        Label startLabel = new Label(title);
+        Button startButton = new Button("Start");
+        startButton.setLayoutX(170);
+        startButton.setLayoutY(150);
+        startGroup.getChildren().add(startButton);
+        startGroup.getChildren().add(title);
+        startButton.setOnAction(e ->  window.setScene(mainScene));
+        
+        Button exitButton = new Button("Exit  ");
+        exitButton.setOnAction(e -> {
+            // Close the window
+            Stage stage = (Stage) exitButton.getScene().getWindow();
+            stage.close();
+        });
+        exitButton.setLayoutX(170);
+        exitButton.setLayoutY(220);
+        startGroup.getChildren().add(exitButton);
+        
+        
         // Tạo màn hình chơi game
         mazeGroup = new Group();
         for (int i = 0; i < solver.getMaze().size(); i++) {
@@ -75,9 +121,9 @@ public class MazeGame extends Application {
         mazeGroup.getChildren().add(playerRect);
 
         // Tạo scene và hiển thị
-        Scene scene = new Scene(mazeGroup, solver.getMaze().get(0).size() * TILE_SIZE, solver.getMaze().size() * TILE_SIZE);
-        primaryStage.setScene(scene);
-        primaryStage.show();
+        mainScene = new Scene(mazeGroup, solver.getMaze().get(0).size() * TILE_SIZE, solver.getMaze().size() * TILE_SIZE);
+        window.setScene(startScene);
+        window.show();
 
         // Di chuyển thực thể
         Timeline timeline = new Timeline();
@@ -101,7 +147,7 @@ public class MazeGame extends Application {
         timeline.play();
 
         // Bắt sự kiện phím để di chuyển người chơi
-        scene.setOnKeyPressed(event -> {
+        mainScene.setOnKeyPressed(event -> {
 
             switch (event.getCode()) {
                 case UP:
